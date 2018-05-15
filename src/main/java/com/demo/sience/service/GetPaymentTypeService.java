@@ -112,14 +112,14 @@ public class GetPaymentTypeService {
                 if (future != null && future.get(TIMEOUT, TimeUnit.SECONDS) != null) {
                     return new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType(), future.get().isEnable(), future.get().getErrorCode());
                 } else {
-                    log.warn("请求失败");
+                    log.warn("请求失败,paymentType:{}", paymentTypeResultDO.getPaymentType());
                 }
             } catch (InterruptedException e) {
-                log.warn("中断异常", e);
+                log.warn("中断异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
             } catch (ExecutionException e) {
-                log.warn("执行异常", e);
+                log.warn("执行异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
             } catch (TimeoutException e) {
-                log.warn("超时异常", e);
+                log.warn("超时异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
             }
             // 统一处理失败情况，状态码可以根据场景映射
             return new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType(), false, ErrorInfoTypeEnum.FAIL.getErrorCode());
