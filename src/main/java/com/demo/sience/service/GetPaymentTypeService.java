@@ -2,7 +2,6 @@ package com.demo.sience.service;
 
 import com.demo.sience.common.AccessLimitService;
 import com.demo.sience.common.NamedThreadFactory;
-import com.demo.sience.enums.ErrorInfoTypeEnum;
 import com.demo.sience.model.ConsultResult;
 import com.demo.sience.model.PaymentTypeResultDO;
 import com.demo.sience.model.PaymentTypeResultDTO;
@@ -10,6 +9,7 @@ import com.demo.sience.model.PaymentTypeResultDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -94,7 +94,7 @@ public class GetPaymentTypeService {
 
         if (!access()) {
             // 超过限流上限值，根据业务场景处理
-            return PaymentTypeResultDTO.getDefaultValue(paymentTypeList, ErrorInfoTypeEnum.LIMIT);
+            return Collections.emptyList();
         }
         return doGetPaymentTypeResultList(paymentTypeList);
     }
@@ -105,25 +105,27 @@ public class GetPaymentTypeService {
                 .map(paymentType -> new PaymentTypeResultDO(paymentType, EXECUTOR.submit(new GetPaymentTypeTask(paymentType))))
                 .collect(Collectors.toList());
 
-        return paymentTypeResultDOList.stream().map(paymentTypeResultDO -> {
+        final List<PaymentTypeResultDTO> result = new ArrayList<>(paymentTypeResultDOList.size());
+
+        paymentTypeResultDOList.forEach(paymentTypeResultDO -> {
             Future<ConsultResult> future = paymentTypeResultDO.getFuture();
-            try {
-                // get方法可以根据场景指定超时时间
-                if (future != null && future.get(TIMEOUT, TimeUnit.SECONDS) != null) {
-                    return new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType(), future.get().isEnable(), future.get().getErrorCode());
-                } else {
-                    log.warn("请求失败,paymentType:{}", paymentTypeResultDO.getPaymentType());
+            if (future != null) {
+                try {
+                    // 超时时间根据场景而定
+                    ConsultResult consultResult = future.get(TIMEOUT, TimeUnit.SECONDS);
+                    if (consultResult != null && consultResult.isEnable()) {
+                        result.add(new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType()));
+                    }
+                } catch (InterruptedException e) {
+                    log.warn("中断异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
+                } catch (ExecutionException e) {
+                    log.warn("执行异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
+                } catch (TimeoutException e) {
+                    log.warn("超时异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
                 }
-            } catch (InterruptedException e) {
-                log.warn("中断异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
-            } catch (ExecutionException e) {
-                log.warn("执行异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
-            } catch (TimeoutException e) {
-                log.warn("超时异常,paymentType:{}", paymentTypeResultDO.getPaymentType(), e);
             }
-            // 统一处理失败情况，状态码可以根据场景映射
-            return new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType(), false, ErrorInfoTypeEnum.FAIL.getErrorCode());
-        }).collect(Collectors.toList());
+        });
+        return result;
     }
 
     private boolean access() {

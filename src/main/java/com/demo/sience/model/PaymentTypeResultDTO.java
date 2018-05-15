@@ -14,19 +14,13 @@ public class PaymentTypeResultDTO {
 
     private String type;
 
-    private Boolean enable;
-
-    private String errorCode;
-
-    public PaymentTypeResultDTO(final String type, final Boolean enable, final String errorCode) {
+    public PaymentTypeResultDTO(final String type) {
         this.type = type;
-        this.enable = enable;
-        this.errorCode = errorCode;
     }
 
-    public static List<PaymentTypeResultDTO> getDefaultValue(List<String> paymentTypeList, ErrorInfoTypeEnum errorInfoTypeEnum) {
+    public static List<PaymentTypeResultDTO> getDefaultValue(List<String> paymentTypeList) {
         return paymentTypeList.stream()
-                .map(paymentType -> new PaymentTypeResultDTO(paymentType, false, errorInfoTypeEnum.getErrorCode()))
+                .map(paymentType -> new PaymentTypeResultDTO(paymentType))
                 .collect(Collectors.toList());
     }
 
@@ -34,20 +28,10 @@ public class PaymentTypeResultDTO {
         return type;
     }
 
-    public Boolean isEnable() {
-        return enable;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("type", this.type)
-                .add("enable", this.enable)
-                .add("errorCode", this.errorCode)
                 .toString();
     }
 }
