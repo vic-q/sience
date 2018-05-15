@@ -113,7 +113,9 @@ public class GetPaymentTypeService {
                 try {
                     // 超时时间根据场景而定
                     ConsultResult consultResult = future.get(TIMEOUT, TimeUnit.SECONDS);
-                    if (consultResult != null && consultResult.isEnable()) {
+                    if (consultResult != null
+                            && consultResult.isEnable() != null
+                            && consultResult.isEnable()) {
                         result.add(new PaymentTypeResultDTO(paymentTypeResultDO.getPaymentType()));
                     }
                 } catch (InterruptedException e) {
