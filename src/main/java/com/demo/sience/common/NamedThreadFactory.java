@@ -27,7 +27,7 @@ public class NamedThreadFactory implements ThreadFactory {
 
 
     public Thread newThread(Runnable r) {
-        Thread t = new Thread(r, this.prefix + "-" + threadNumber.get());
+        Thread t = new Thread(r, this.prefix + "-" + threadNumber.getAndIncrement());
         t.setUncaughtExceptionHandler(uncaughtExceptionHandler);
         return t;
     }
